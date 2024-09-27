@@ -101,10 +101,6 @@ class FunctionCommentSniff implements Sniff
             break;
         }
 
-        if (isset($tokens[$commentEnd]['comment_opener']) === true) {
-            $commentStart = $tokens[$commentEnd]['comment_opener'];
-        }
-
         $methodName = $phpcsFile->getDeclarationName($stackPtr);
         if ($tokens[$commentEnd]['code'] !== T_DOC_COMMENT_CLOSE_TAG
             && $tokens[$commentEnd]['code'] !== T_COMMENT
@@ -118,7 +114,7 @@ class FunctionCommentSniff implements Sniff
             // Method prohibited to have docblock.
             $fix = $phpcsFile->addFixableError("It's forbidden to document $methodName function", $stackPtr, 'DocProhibited');
             if ($fix === true) {
-                for ($i = $commentStart; $i <= $commentEnd; $i++) {
+                for ($i = $tokens[$commentEnd]['comment_opener']; $i <= $commentEnd; $i++) {
                     $phpcsFile->fixer->replaceToken($i, '');
                 }
             }
@@ -161,6 +157,7 @@ class FunctionCommentSniff implements Sniff
             return;
         }
 
+        $commentStart = $tokens[$commentEnd]['comment_opener'];
         foreach ($tokens[$commentStart]['comment_tags'] as $tag) {
             // This is a file comment, not a function comment.
             if ($tokens[$tag]['content'] === '@file') {
