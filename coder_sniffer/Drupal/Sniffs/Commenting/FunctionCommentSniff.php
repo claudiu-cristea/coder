@@ -25,6 +25,11 @@ class FunctionCommentSniff implements Sniff
 {
 
     /**
+     * @var array<string>
+     */
+    public $commentProhibitedFunctions = [];
+
+    /**
      * A map of invalid data types to valid ones for param and return documentation.
      *
      * @var array<string, string>
@@ -93,14 +98,29 @@ class FunctionCommentSniff implements Sniff
 
             break;
         }
+        if (isset($tokens[$commentEnd]['comment_opener'])) {
+            $commentStart = $tokens[$commentEnd]['comment_opener'];
+        }
 
-        // Constructor methods are exempt from requiring a docblock.
-        // @see https://www.drupal.org/project/coder/issues/3400560.
         $methodName = $phpcsFile->getDeclarationName($stackPtr);
-        if ($methodName === '__construct'
-            && $tokens[$commentEnd]['code'] !== T_DOC_COMMENT_CLOSE_TAG
+        if ($tokens[$commentEnd]['code'] !== T_DOC_COMMENT_CLOSE_TAG
             && $tokens[$commentEnd]['code'] !== T_COMMENT
         ) {
+            if ($methodName === '__construct') {
+                // Constructor methods are exempt from requiring a docblock.
+                // @see https://www.drupal.org/project/coder/issues/3400560.
+                return;
+            }
+        }
+        elseif (in_array($methodName, $this->commentProhibitedFunctions, true)) {
+            // Method prohibited to have docblock.
+            $fix = $phpcsFile->addFixableError("It's forbidden to document $methodName function", $stackPtr, 'DocProhibited');
+            if ($fix === true) {
+                for ($i = $commentStart; $i <= $commentEnd; $i++) {
+                  $phpcsFile->fixer->replaceToken($i, '');
+                }
+            }
+
             return;
         }
 
@@ -139,7 +159,6 @@ class FunctionCommentSniff implements Sniff
             return;
         }
 
-        $commentStart = $tokens[$commentEnd]['comment_opener'];
         foreach ($tokens[$commentStart]['comment_tags'] as $tag) {
             // This is a file comment, not a function comment.
             if ($tokens[$tag]['content'] === '@file') {
