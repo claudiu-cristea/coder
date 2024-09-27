@@ -25,6 +25,8 @@ class FunctionCommentSniff implements Sniff
 {
 
     /**
+     * List of methods that are prohibited to have docblock.
+     *
      * @var array<string>
      */
     public $commentProhibitedFunctions = [];
@@ -98,7 +100,8 @@ class FunctionCommentSniff implements Sniff
 
             break;
         }
-        if (isset($tokens[$commentEnd]['comment_opener'])) {
+
+        if (isset($tokens[$commentEnd]['comment_opener']) === true) {
             $commentStart = $tokens[$commentEnd]['comment_opener'];
         }
 
@@ -111,13 +114,12 @@ class FunctionCommentSniff implements Sniff
                 // @see https://www.drupal.org/project/coder/issues/3400560.
                 return;
             }
-        }
-        elseif (in_array($methodName, $this->commentProhibitedFunctions, true)) {
+        } else if (in_array($methodName, $this->commentProhibitedFunctions, true) === true) {
             // Method prohibited to have docblock.
             $fix = $phpcsFile->addFixableError("It's forbidden to document $methodName function", $stackPtr, 'DocProhibited');
             if ($fix === true) {
                 for ($i = $commentStart; $i <= $commentEnd; $i++) {
-                  $phpcsFile->fixer->replaceToken($i, '');
+                    $phpcsFile->fixer->replaceToken($i, '');
                 }
             }
 
