@@ -112,7 +112,7 @@ class FunctionCommentSniff implements Sniff
             }
         } else if (in_array($methodName, $this->commentProhibitedFunctions, true) === true) {
             // Method prohibited to have docblock.
-            $fix = $phpcsFile->addFixableError("It's forbidden to document $methodName function", $stackPtr, 'DocProhibited');
+            $fix = $phpcsFile->addFixableError("It's forbidden to document %s function", $stackPtr, 'ForbiddenFunction', [$methodName]);
             if ($fix === true) {
                 for ($i = $tokens[$commentEnd]['comment_opener']; $i <= $commentEnd; $i++) {
                     $phpcsFile->fixer->replaceToken($i, '');
